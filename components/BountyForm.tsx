@@ -310,12 +310,12 @@ export default function BountyForm() {
           </Button>
 
           {txSuccess && bountyId && (
-            <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-lg">
+            <div className="mt-4 p-4 bg-green-50 text-gray-800 rounded-lg">
               <p className="mb-2">Bounty created successfully!</p>
               {chain === "lens" && (
                 <Link
                   href={`/lens/bounty/${bountyId}`}
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 text-sm hover:underline"
                 >
                   View your Lens bounty →
                 </Link>

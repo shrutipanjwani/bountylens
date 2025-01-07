@@ -7,6 +7,7 @@ import { ethers } from "ethers";
 import Button from "@/components/Button";
 import lensAbi from "@/constants/lens-abis/LensBounty.json";
 import Header from "@/components/Header";
+import Image from "next/image";
 
 const LENS_CONTRACT = "0xFaE3cd09af9F77743c7009df3B42e253C0892aBA";
 const LENS_CHAIN_ID = "0x90F7"; // Lens Network Sepolia Testnet
@@ -45,6 +46,28 @@ export default function BountyPage({
   const [claimDescription, setClaimDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [bountyId, setBountyId] = useState<string>(resolvedParams.id);
+  const [proofImage, setProofImage] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState<string | null>(null);
+
+  // Add this useEffect to get current user's address
+  useEffect(() => {
+    const getCurrentAddress = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({
+            method: "eth_accounts",
+          });
+          if (accounts.length > 0) {
+            setCurrentAddress(accounts[0].toLowerCase());
+          }
+        } catch (err) {
+          console.error("Error getting current address:", err);
+        }
+      }
+    };
+    getCurrentAddress();
+  }, []);
 
   useEffect(() => {
     setBountyId(resolvedParams.id);
@@ -104,10 +127,32 @@ export default function BountyPage({
       return;
     }
 
+    if (!proofImage) {
+      setError("Please upload proof image");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
     try {
+      // Upload image to IPFS first
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append("file", proofImage);
+
+      const uploadResponse = await fetch("/api/upload-to-pinata", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const { ipfsUrl } = await uploadResponse.json();
+      setUploadingImage(false);
+
       let provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
 
@@ -170,13 +215,14 @@ export default function BountyPage({
         bountyId: bountyId,
         claimName,
         claimDescription,
+        ipfsUrl,
       });
 
       // Estimate gas first
       const gasEstimate = await contract.estimateGas.createClaim(
         bountyId,
         claimName,
-        "ipfs://",
+        ipfsUrl,
         claimDescription
       );
 
@@ -186,7 +232,7 @@ export default function BountyPage({
       const tx = await contract.createClaim(
         bountyId,
         claimName,
-        "ipfs://",
+        ipfsUrl,
         claimDescription,
         {
           gasLimit: gasLimit,
@@ -206,6 +252,7 @@ export default function BountyPage({
       await loadBountyDetails();
       setClaimName("");
       setClaimDescription("");
+      setProofImage(null);
     } catch (err: any) {
       console.error("Detailed error:", err);
 
@@ -222,6 +269,7 @@ export default function BountyPage({
       setError(errorMessage);
     } finally {
       setSubmitting(false);
+      setUploadingImage(false);
     }
   };
 
@@ -329,7 +377,12 @@ export default function BountyPage({
     }
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon"></div>
+      </div>
+    );
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
   if (!bounty) return <div className="p-4">Bounty not found</div>;
 
@@ -363,50 +416,85 @@ export default function BountyPage({
           </div>
         </div>
 
-        {bounty.claimer === ethers.constants.AddressZero && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Submit a Claim</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Claim Title
-                </label>
-                <input
-                  type="text"
-                  value={claimName}
-                  onChange={(e) => setClaimName(e.target.value)}
-                  className="w-full p-2 border rounded"
-                  placeholder="Enter your claim title"
-                />
+        {bounty.claimer === ethers.constants.AddressZero &&
+          currentAddress &&
+          bounty.issuer.toLowerCase() !== currentAddress && (
+            <div className="bg-white rounded-lg shadow p-6 mt-4">
+              <h2 className="text-xl font-bold mb-4">Submit a Claim</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Proof Image
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProofImage(e.target.files?.[0] || null)}
+                    className="w-full px-4 py-2 border rounded-[20px]"
+                  />
+                  {proofImage && (
+                    <div className="mt-2">
+                      <Image
+                        src={URL.createObjectURL(proofImage)}
+                        alt="Proof preview"
+                        className="h-32 w-auto rounded-lg"
+                        unoptimized
+                        width={100}
+                        height={100}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Claim Title
+                  </label>
+                  <input
+                    type="text"
+                    value={claimName}
+                    onChange={(e) => setClaimName(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-[20px]"
+                    placeholder="Enter your claim title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Claim Description
+                  </label>
+                  <textarea
+                    value={claimDescription}
+                    onChange={(e) => setClaimDescription(e.target.value)}
+                    className="w-full px-4 py-4 border rounded-[20px] h-32"
+                    placeholder="Describe how you completed the bounty"
+                  />
+                </div>
+                <Button
+                  onClick={submitClaim}
+                  disabled={
+                    submitting ||
+                    uploadingImage ||
+                    !claimName ||
+                    !claimDescription ||
+                    !proofImage
+                  }
+                  className="w-full"
+                >
+                  {submitting
+                    ? "Submitting..."
+                    : uploadingImage
+                    ? "Uploading Image..."
+                    : "Submit Claim"}
+                </Button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Claim Description
-                </label>
-                <textarea
-                  value={claimDescription}
-                  onChange={(e) => setClaimDescription(e.target.value)}
-                  className="w-full p-2 border rounded h-32"
-                  placeholder="Describe how you completed the bounty"
-                />
-              </div>
-              <Button
-                onClick={submitClaim}
-                disabled={submitting || !claimName || !claimDescription}
-                className="w-full"
-              >
-                {submitting ? "Submitting..." : "Submit Claim"}
-              </Button>
             </div>
-          </div>
-        )}
+          )}
 
         {claims.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 mt-4">
             <h2 className="text-xl font-bold mb-4">Claims</h2>
             <div className="space-y-4">
               {claims.map((claim) => (
-                <div key={claim.id} className="border rounded p-4">
+                <div key={claim.id} className="border rounded-[20px] p-4">
                   <h3 className="font-semibold">{claim.name}</h3>
                   <p className="text-gray-600 mt-2">{claim.description}</p>
                   <div className="mt-2 text-sm text-gray-500">

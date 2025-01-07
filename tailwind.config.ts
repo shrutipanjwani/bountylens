@@ -9,7 +9,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        green: "#ACFD2C",
+        neon: "#ACFD2C",
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {
