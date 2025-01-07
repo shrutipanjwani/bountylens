@@ -6,6 +6,7 @@ import { useState, useEffect, use } from "react";
 import { ethers } from "ethers";
 import Button from "@/components/Button";
 import lensAbi from "@/constants/lens-abis/LensBounty.json";
+import Header from "@/components/Header";
 
 const LENS_CONTRACT = "0xFaE3cd09af9F77743c7009df3B42e253C0892aBA";
 const LENS_CHAIN_ID = "0x90F7"; // Lens Network Sepolia Testnet
@@ -333,102 +334,106 @@ export default function BountyPage({
   if (!bounty) return <div className="p-4">Bounty not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-8">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold mb-4">{bounty.name}</h1>
-        <div className="space-y-4">
-          <p className="text-gray-600">{bounty.description}</p>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-semibold">Amount:</span> {bounty.amount}{" "}
-              GRASS
-            </div>
-            <div>
-              <span className="font-semibold">Created:</span> {bounty.createdAt}
-            </div>
-            <div>
-              <span className="font-semibold">Issuer:</span> {bounty.issuer}
-            </div>
-            <div>
-              <span className="font-semibold">Status:</span>{" "}
-              {bounty.claimer === ethers.constants.AddressZero
-                ? "Open"
-                : "Claimed"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {bounty.claimer === ethers.constants.AddressZero && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">Submit a Claim</h2>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <Header />
+        <div className="bg-white rounded-lg shadow p-6 mt-12">
+          <h1 className="text-2xl font-bold mb-4">{bounty.name}</h1>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Claim Title
-              </label>
-              <input
-                type="text"
-                value={claimName}
-                onChange={(e) => setClaimName(e.target.value)}
-                className="w-full p-2 border rounded"
-                placeholder="Enter your claim title"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Claim Description
-              </label>
-              <textarea
-                value={claimDescription}
-                onChange={(e) => setClaimDescription(e.target.value)}
-                className="w-full p-2 border rounded h-32"
-                placeholder="Describe how you completed the bounty"
-              />
-            </div>
-            <Button
-              onClick={submitClaim}
-              disabled={submitting || !claimName || !claimDescription}
-              className="w-full"
-            >
-              {submitting ? "Submitting..." : "Submit Claim"}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {claims.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">Claims</h2>
-          <div className="space-y-4">
-            {claims.map((claim) => (
-              <div key={claim.id} className="border rounded p-4">
-                <h3 className="font-semibold">{claim.name}</h3>
-                <p className="text-gray-600 mt-2">{claim.description}</p>
-                <div className="mt-2 text-sm text-gray-500">
-                  Submitted by {claim.issuer} on {claim.createdAt}
-                </div>
-                {claim.accepted ? (
-                  <div className="mt-2 text-green-600 font-semibold">
-                    ✓ Accepted
-                  </div>
-                ) : (
-                  bounty.issuer.toLowerCase() ===
-                    window.ethereum?.selectedAddress?.toLowerCase() && (
-                    <Button
-                      onClick={() => acceptClaim(claim.id)}
-                      disabled={submitting}
-                      className="mt-2"
-                    >
-                      {submitting ? "Processing..." : "Accept Claim"}
-                    </Button>
-                  )
-                )}
+            <p className="text-gray-600">{bounty.description}</p>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-semibold">Amount:</span> {bounty.amount}{" "}
+                GRASS
               </div>
-            ))}
+              <div>
+                <span className="font-semibold">Created:</span>{" "}
+                {bounty.createdAt}
+              </div>
+              <div>
+                <span className="font-semibold">Issuer:</span> {bounty.issuer}
+              </div>
+              <div>
+                <span className="font-semibold">Status:</span>{" "}
+                {bounty.claimer === ethers.constants.AddressZero
+                  ? "Open"
+                  : "Claimed"}
+              </div>
+            </div>
           </div>
         </div>
-      )}
+
+        {bounty.claimer === ethers.constants.AddressZero && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold mb-4">Submit a Claim</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Claim Title
+                </label>
+                <input
+                  type="text"
+                  value={claimName}
+                  onChange={(e) => setClaimName(e.target.value)}
+                  className="w-full p-2 border rounded"
+                  placeholder="Enter your claim title"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Claim Description
+                </label>
+                <textarea
+                  value={claimDescription}
+                  onChange={(e) => setClaimDescription(e.target.value)}
+                  className="w-full p-2 border rounded h-32"
+                  placeholder="Describe how you completed the bounty"
+                />
+              </div>
+              <Button
+                onClick={submitClaim}
+                disabled={submitting || !claimName || !claimDescription}
+                className="w-full"
+              >
+                {submitting ? "Submitting..." : "Submit Claim"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {claims.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold mb-4">Claims</h2>
+            <div className="space-y-4">
+              {claims.map((claim) => (
+                <div key={claim.id} className="border rounded p-4">
+                  <h3 className="font-semibold">{claim.name}</h3>
+                  <p className="text-gray-600 mt-2">{claim.description}</p>
+                  <div className="mt-2 text-sm text-gray-500">
+                    Submitted by {claim.issuer} on {claim.createdAt}
+                  </div>
+                  {claim.accepted ? (
+                    <div className="mt-2 text-green-600 font-semibold">
+                      ✓ Accepted
+                    </div>
+                  ) : (
+                    bounty.issuer.toLowerCase() ===
+                      window.ethereum?.selectedAddress?.toLowerCase() && (
+                      <Button
+                        onClick={() => acceptClaim(claim.id)}
+                        disabled={submitting}
+                        className="mt-2"
+                      >
+                        {submitting ? "Processing..." : "Accept Claim"}
+                      </Button>
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

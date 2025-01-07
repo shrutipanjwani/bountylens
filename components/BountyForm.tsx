@@ -239,8 +239,8 @@ export default function BountyForm() {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe your bounty idea... (e.g., 'Post an image of your dog with a hat')"
-          className="w-full h-32 p-4 text-gray-900 border rounded-lg focus:ring-2 focus:ring-gray-200 outline-none"
+          placeholder="Describe your bounty idea... (e.g., 'Looking for a developer to create a DeFi dashboard' or 'Need artistic NFT designs for a collection')"
+          className="w-full h-32 p-4 text-gray-900 bg-white rounded-[20px] outline-none"
         />
         <Button
           onClick={generateBounty}

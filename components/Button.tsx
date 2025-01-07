@@ -17,8 +17,8 @@ export default function Button({
         px-4 py-2 rounded-lg font-medium transition-all
         ${
           variant === "primary"
-            ? "bg-gray-900 text-white hover:bg-black"
-            : "bg-gray-900 text-gray-100 hover:bg-black"
+            ? "bg-green text-gray-800 hover:bg-green"
+            : "bg-green text-gray-800 hover:bg-green"
         }
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
         ${className}

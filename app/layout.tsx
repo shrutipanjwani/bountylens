@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "BountyLens",
   description:
     "An AI-powered decentralized bounty platform built on Lens Protocol",
+  icons: {
+    icon: "/favicon.png",
+  },
   openGraph: {
     title: "BountyLens",
     description:
