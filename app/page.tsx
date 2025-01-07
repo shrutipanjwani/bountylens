@@ -1,3 +1,11 @@
+"use client";
+
+import { ConnectKitButton } from "connectkit";
+
 export default function Home() {
-  return <div></div>;
+  return (
+    <div>
+      <ConnectKitButton />
+    </div>
+  );
 }
