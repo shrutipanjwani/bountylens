@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 import Button from "./Button";
 import lensAbi from "../constants/lens-abis/LensBounty.json";
 import Link from "next/link";
+import { useAccount } from "wagmi";
 
 const CONTRACT_ADDRESSES = {
   lens: "0xFaE3cd09af9F77743c7009df3B42e253C0892aBA",
@@ -23,28 +24,6 @@ interface ChainConfig {
 }
 
 const CHAIN_CONFIG: Record<string, ChainConfig> = {
-  base: {
-    chainId: "0x2105",
-    name: "Base",
-    currency: "ETH",
-    rpcUrl: "https://mainnet.base.org",
-    nativeCurrency: {
-      name: "ETH",
-      symbol: "ETH",
-      decimals: 18,
-    },
-  },
-  degen: {
-    chainId: "0x27BC86AA",
-    name: "Degen",
-    currency: "DEGEN",
-    rpcUrl: "https://rpc.degen.tips",
-    nativeCurrency: {
-      name: "DEGEN",
-      symbol: "DEGEN",
-      decimals: 18,
-    },
-  },
   lens: {
     chainId: "0x90F7",
     name: "Lens Network Sepolia Testnet",
@@ -71,32 +50,39 @@ export default function BountyForm() {
   const [txSuccess, setTxSuccess] = useState(false);
   const [bountyId, setBountyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { address } = useAccount();
 
   const generateBounty = async () => {
-    setLoadingGenerate(true);
-    try {
-      const response = await fetch("/api/generate-bounty", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ idea: prompt }),
-      });
+    if (address) {
+      setLoadingGenerate(true);
+      try {
+        const response = await fetch("/api/generate-bounty", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ idea: prompt }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to generate bounty");
+        if (!response.ok) {
+          throw new Error("Failed to generate bounty");
+        }
+
+        const bountyData = await response.json();
+        setGeneratedBounty({
+          title: bountyData.title,
+          description: bountyData.description,
+        });
+      } catch (error) {
+        console.error("Error generating bounty:", error);
+        // Optionally add user-facing error handling here
+      } finally {
+        setLoadingGenerate(false);
       }
-
-      const bountyData = await response.json();
-      setGeneratedBounty({
-        title: bountyData.title,
-        description: bountyData.description,
-      });
-    } catch (error) {
-      console.error("Error generating bounty:", error);
-      // Optionally add user-facing error handling here
-    } finally {
-      setLoadingGenerate(false);
+    } else {
+      setTimeout(function () {
+        setError("Please connect your wallet");
+      }, 2000);
     }
   };
 
@@ -244,6 +230,11 @@ export default function BountyForm() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
+          <p className="mb-2">{error}</p>
+        </div>
+      )}
       <div className="space-y-4">
         <textarea
           value={prompt}
@@ -290,8 +281,6 @@ export default function BountyForm() {
                 onChange={handleChainChange}
                 className="w-full p-2 border rounded text-gray-700 outline-none"
               >
-                <option value="base">Base</option>
-                <option value="degen">Degen</option>
                 <option value="lens">Lens Network</option>
               </select>
             </div>
@@ -323,28 +312,14 @@ export default function BountyForm() {
           {txSuccess && bountyId && (
             <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-lg">
               <p className="mb-2">Bounty created successfully!</p>
-              {chain === "lens" ? (
+              {chain === "lens" && (
                 <Link
                   href={`/lens/bounty/${bountyId}`}
                   className="text-blue-600 hover:underline"
                 >
                   View your Lens bounty →
                 </Link>
-              ) : (
-                <a
-                  href={`https://poidh.xyz/${chain}/bounty/${bountyId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  View your bounty →
-                </a>
               )}
-            </div>
-          )}
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
-              <p className="mb-2">{error}</p>
             </div>
           )}
         </div>
