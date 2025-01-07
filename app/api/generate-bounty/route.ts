@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const YOUR_SITE_URL = "https://poidh.xyz";
+const YOUR_SITE_URL = "https://bountylens.vercel.app";
 const YOUR_SITE_NAME = "BountyLens";
 
 export async function POST(request: Request) {
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
           messages: [
             {
               role: "system",
-              content: `You are an AI assistant for POIDH (Pics or It Didn't Happen). Generate concise bounty ideas that require photo/video proof. Format your response exactly like this example:
+              content: `You are an AI assistant for BountyLens. Generate concise bounty ideas that require photo/video proof. Format your response exactly like this example:
 
 {
   "title": "24-Hour Coding Marathon",
@@ -34,7 +34,7 @@ Keep titles under 50 characters and descriptions under 200 characters. Focus on 
             },
             {
               role: "user",
-              content: `Generate a POIDH bounty based on this idea: ${idea}`,
+              content: `Generate a Lens bounty based on this idea: ${idea}`,
             },
           ],
         }),
